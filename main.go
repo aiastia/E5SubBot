@@ -22,7 +22,7 @@ var (
 )
 
 const (
-	dbDriverName = "mysql"
+	dbDriverName = "sqlite3"
 	logo         = `
   ______ _____ _____       _     ____        _   
  |  ____| ____/ ____|     | |   |  _ \      | |  
@@ -80,18 +80,16 @@ func init() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	host := viper.GetString("mysql.host")
-	user := viper.GetString("mysql.user")
-	port := viper.GetString("mysql.port")
-	pwd := viper.GetString("mysql.password")
-	database := viper.GetString("mysql.database")
-	dbPath = strings.Join([]string{user, ":", pwd, "@tcp(", host, ":", port, ")/", database, "?charset=utf8"}, "")
+
+	dbPath = strings.Trim(viper.GetString("dbfile"), "")
+	logger.Println("sqlite3 db file ->", dbPath)
+
 	//fmt.Println(path)
 	db, err := sql.Open(dbDriverName, dbPath)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Println("Connect MySQL Success!")
+	logger.Println("Connect SQLite Success!")
 	if ok, err := CreateTB(); !ok {
 		logger.Fatal(err)
 	}

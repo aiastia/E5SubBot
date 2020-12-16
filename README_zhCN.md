@@ -1,23 +1,20 @@
-# E5SubBot
+# E5SubBot For SQLite
 
-![](https://img.shields.io/github/go-mod/go-version/iyear/E5SubBot?style=flat-square)
+![](https://img.shields.io/github/go-mod/go-version/rainerosion/E5SubBot?style=flat-square)
 ![](https://img.shields.io/badge/license-GPL-lightgrey.svg?style=flat-square)
-![](https://img.shields.io/github/v/release/iyear/E5SubBot?color=green&style=flat-square)
+![](https://img.shields.io/github/v/release/rainerosion/E5SubBot?color=green&style=flat-square)
 
-[English](https://github.com/iyear/E5SubBot) | 简体中文
+[English](https://github.com/rainerosion/E5SubBot) | 简体中文
 
 A Simple Telebot for E5 Renewal
 
-`Golang` + `MySQL`
+`Golang` + `SQLite`
 
-DEMO: https://t.me/E5Sub_bot (长期运行，所有新功能会在DEMO测试)
+DEMO: https://t.me/raindev_bot (仅用于测试DEMO测试)
 
-[交流群组](https://t.me/e5subbot)
-
-## 预览
-<center class="half">
-    <img src="https://raw.githubusercontent.com/iyear/E5SubBot/master/pics/bind.JPG" width="200"/><img src="https://raw.githubusercontent.com/iyear/E5SubBot/master/pics/my.JPG" width="200"/><img src="https://raw.githubusercontent.com/iyear/E5SubBot/master/pics/task.JPG" width="200"/>
-</center>
+[e5subbot交流群组](https://t.me/e5subbot)
+## 说明
+该项目是基于[iyear/E5SubBot](https://github.com/iyear/E5SubBot)进行简单的修改，将`github.com/go-sql-driver/mysql`替换为`github.com/mattn/go-sqlite3`实现使用SQLite数据库保存数据的。
 
 ## 特性
 
@@ -41,41 +38,90 @@ E5订阅为开发者订阅，只要调用相关API就有可能续期
 4. 获得授权链接，使用E5主账号或同域账号登录
 5. 授权后会跳转至`http://localhost/e5sub……`  (会提示网页错误，复制链接即可)
 6. 复制整个浏览框内容，在机器人对话框回复 `链接+空格+别名(用于管理账户)`
-例如：`http://localhost/e5sub/?code=abcd MyE5`，等待机器人绑定后即完成
+   例如：`http://localhost/e5sub/?code=abcd MyE5`，等待机器人绑定后即完成
 
 ## 自行部署
 
 Bot创建教程:[Google](https://www.google.com/search?q=telegram+Bot%E5%88%9B%E5%BB%BA%E6%95%99%E7%A8%8B)
 
 ### Docker部署
-感谢 [@kzw200015](https://github.com/kzw200015) 提供`Dockerfile`以及`Docker`方面的帮助
-
-第一次启动不行，使用 `docker-compose restart`重启一次
 ```bash
-mkdir ./e5bot && wget --no-check-certificate -O ./e5bot/config.yml https://raw.githubusercontent.com/iyear/E5SubBot/master/config.yml.example
-vi ./e5bot/config.yml
-wget --no-check-certificate https://raw.githubusercontent.com/iyear/E5SubBot/master/docker-compose.yml
-docker-compose up -d
+wget --no-check-certificate -O /root/config.yml https://raw.githubusercontent.com/rainerosion/E5SubBot/master/config.yml.example
+# 修改配置文件中的信息
+vim /root/config.yml
+docker run -d -v /root/config.yml:/root/config.yml --restart=always --name e5bot rainerosion/e5subbot-sqlite
 ```
+
 ### 二进制文件
 
-在[Releases](https://github.com/iyear/E5SubBot/releases)页面下载对应系统的二进制文件，上传至服务器
+在[Releases](https://github.com/rainerosion/E5SubBot/releases)页面下载对应系统的二进制文件，上传至服务器
 
 Windows: 在`cmd`中启动 `E5SubBot.exe`
 
-Linux: 
+Linux(方法一):
 
 ```bash
-screen -S e5sub
-chmod 773 E5SubBot
-./E5SubBot
-(Ctrl A+D)
+chmod a+x E5SubBot
+nohup ./E5SubBot > /tmp/e5sub.log &
 ```
+Linux守护进程(适用于Centos)：
+
+- 下载文件
+
+```bash
+wget https://github.com/rainerosion/E5SubBot/releases/download/0.2.1/E5SubBot_linux_x64.tar.gz
+# 解压文件
+tar xvjf E5SubBot_linux_x64.tar.gz
+# 创建文件夹
+mkdir /opt/e5sub
+# 移动文件
+mv ./E5SubBot /opt/e5sub/E5SubBot
+# 添加执行权限
+chmod a+x /opt/e5sub/E5SubBot
+# 编辑配置文件(文件内容请阅读部署配置)
+vim /opt/e5sub/config.yml
+```
+
+- 编辑systemd文件
+
+```bash
+vim /etc/systemd/system/e5sub.service
+```
+
+- 复制以下内容填入上述文件
+
+```reStructuredText
+[Unit]
+Description=Telegram E5Sub Bot
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/e5sub
+ExecStart=/opt/e5sub/E5SubBot
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- 重载配置启动服务
+
+```bash
+# 重载配置文件
+systemctl daemon-reload
+# 开机自启
+systemctl enable e5sub
+# 启动服务
+systemctl start e5sub
+```
+
 ### 编译
 
-下载源码，安装GO环境
+若你的系统无法正常运行，请clone源代码进行编译，需要先安装GO环境
 
 ```shell
+go env -w CGO_ENABLED=1
 go build
 ```
 
@@ -93,12 +139,7 @@ admin: 66666,77777,88888
 errlimit: 5
 cron: "1 */3 * * *"
 bindmax: 3
-mysql:
-  host: 127.0.0.1
-  port: 3306
-  user: e5sub
-  password: e5sub
-  database: e5sub
+dbfile: "e5sub.db"
 ```
 
 `bindmax`,`notice`,`admin`,`errlimit`可热更新，直接更新`config.yml`保存即可
@@ -111,7 +152,8 @@ mysql:
 |errlimit|单账户最大出错次数，满后自动解绑单账户并发送通知，不限制错误次数将值改为负数`(-1)`即可;bot重启后会清零所有错误次数|
 |cron|API调用频率，使用cron表达式|
 |bindmax|最大可绑定数|
-|mysql|mysql配置，请提前创建数据库|
+|dbfile|sqlite数据库文件名|
+|lang|简体中文(默认)：`zh_CN` English:`en_US`|
 
 ### 命令
 ```
@@ -123,6 +165,40 @@ mysql:
 /task 手动执行一次任务(Bot管理员)  
 /log 获取最近日志文件(Bot管理员)  
 ```
+
+## MYSQL数据库转SQLITE
+
+如果没有sqlite3命令请使用下列命令安装
+
+```bash
+sudo yum install sqlite -y
+```
+
+导出数据
+
+```bash
+# 导出mysql数据
+mysqldump -h localhost -P 3306 -u root -p -t 数据库名 users > e5sub.sql
+# 过滤数据
+grep "INSERT" e5sub.sql > e5sqlite.sql
+# 使用sqlite3打开数据库文件
+sqlite3 /opt/e5sub/e5sub.db
+# 创建表，导入数据
+sqlite3> CREATE TABLE `users` (
+  `tg_id` int(11) DEFAULT NULL,
+  `refresh_token` text,
+  `ms_id` varchar(255) DEFAULT NULL,
+  `uptime` int(11) DEFAULT NULL,
+  `alias` varchar(255) DEFAULT NULL,
+  `client_id` varchar(255) DEFAULT NULL,
+  `client_secret` varchar(255) DEFAULT NULL,
+  `other` text);
+sqlite3> .read e5sqlite.sql
+sqlite3> .quit
+# 清除文件
+rm -f e5sqlite.sql e5sub.sql
+```
+
 ## 注意事项
 > 更新时间与北京时间不符
 
@@ -132,10 +208,6 @@ mysql:
 
 不要带"+"号
 
-> 错误:Can't create more than max_prepared_stmt_count statements (current value: 16382)
-
-没有关闭`db`导致触发`mysql`并发上限，请更新至`v0.1.9`
-
 > 长时间运行崩溃
 
 疑似内存泄露，尚未解决，请自行采用守护进程运行或定时重启`Bot`
@@ -143,55 +215,6 @@ mysql:
 > 无法通过Bot创建应用程序
 
 https://t.me/e5subbot/5201
-## 更多功能
-如果你还想支持新的特性，请使用 FeatHub 进行投票，我们将综合考虑投票结果等因素来确定开发的优先级。
-
-[![Feature Requests](https://cloud.githubusercontent.com/assets/390379/10127973/045b3a96-6560-11e5-9b20-31a2032956b2.png)](http://feathub.com/NervJS/taro)  
-
-[![Feature Requests](https://feathub.com/iyear/E5SubBot?format=svg)](https://feathub.com/iyear/E5SubBot)  
-## 做出贡献
-- 提供其他语言的文档
-- 为代码运行提供帮助
-- 对用户交互提出建议
-- ……
-## 小总结
-#### 得到了什么？
-- git的基本操作:add,commit,pull,push.但是对代码合并与冲突解决没有得到足够的实践和深入  
-- github版本库方面的使用(issue,pull request...),还有一些没玩过
-- 体验了Docker Hub 的自动构建
-- sql的CRUD，但都只是浮于表面，有时间再去琢磨
-- telegram bot的golang基本框架和一些有意思的玩法
-- 一些著名第三方库(viper,gjson)的基本用法
-- docker以及docker-compose的基本用法
-- 一些工具:gox;goreleaser的基本用法
-- ……
-#### 还缺点什么？
-
-- 对`CGO`知难而退，编译各种出错。下个项目如果用到`sqlite`一定解决`CGO`交叉编译
-- `DockerFile` 还不会写
-- 对项目的概念和意识不太行，目录太乱，随缘写全局变量
-- 看`telebot`的文档还好，看`stackflow` 只能看看代码。搜索还是习惯性带中文导致`stackflow`很难出现，降低了解决问题的效率
-
-#### 最后
-
-从2020.3.28开发至2020.4.12，一共经历14天，利用课余时间最终完成。
-
-就要开学了，因为马上步入高三，学习紧迫，遂不再进行功能开发。
-
-项目差不多就停更了，最多也就是每个星期看看issue、tg群组，修一修bug
-
-**DEMO依旧能保持服务水平，不会因为个人问题在这段时间停止运行**
-
-如果一年后还有人在用，一定会继续
-
-## Third-Party
-- [telebot](https://gopkg.in/tucnak/telebot)
-- [mysql_driver](https://github.com/go-sql-driver/mysql)
-- [gjson](https://github.com/tidwall/gjson)
-- [cron](https://github.com/robfig/cron/)
-- [viper](https://github.com/spf13/viper)
-- [goreleaser](https://https://github.com/goreleaser/goreleaser)
-
 ## License
 
 GPLv3 

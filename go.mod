@@ -3,8 +3,9 @@ module main
 go 1.13
 
 require (
+	github.com/chai2010/gettext-go v1.0.2
 	github.com/fsnotify/fsnotify v1.4.7
-	github.com/go-sql-driver/mysql v1.5.0
+	github.com/mattn/go-sqlite3 v1.14.5
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/spf13/viper v1.6.2
 	github.com/tidwall/gjson v1.6.0
